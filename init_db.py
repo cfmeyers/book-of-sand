@@ -2,6 +2,7 @@ from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy import Column, DateTime, Integer, String, Table, Text, Date, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, sessionmaker
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -34,10 +35,10 @@ class Events(Base):
     date = Column(DateTime)
 
     #----------------------------------------------------------------------
-    def __init__(self, name, date):
+    def __init__(self, name):
         """"""
         self.name = name
-        self.date = date
+        self.date = datetime.now()
 
 ########################################################################
 class Projects(Base):
@@ -94,10 +95,10 @@ class Tasks(Base):
     date_completed = Column(DateTime)
 
     #----------------------------------------------------------------------
-    def __init__(self, name, date_assigned):
+    def __init__(self, name):
         """"""
         self.name = name
-        self.date_assigned = date_assigned
+        self.date_assigned = datetime.now()
 
 ########################################################################
 if __name__ == '__main__':
