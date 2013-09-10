@@ -3,19 +3,20 @@ Feature: Create a task
     I want to create tasks using SQLalchemy ORM
     So that I can add them to the database
 
-Scenario: Empty database
-    Given an empty database
-    When I create a task named "do 3 pushups" and add it to the session
-    And I create a tag named "workout" and add it to the session
-    And commit the session to the db
-    Then the task named "do 3 pushups" is autoassigned an id of 1
-    Then the tag named "workout" is autoassigned an id of 1
+    Scenario: Create a <task> and objects to associate with the <task>
+        Given an empty database
+        And I create a <task> named "drop off drycleaning" and add it to the session
 
-Scenario: Database has a tag and a task
-    Given a database with a task named "do 3 pushups"
-    And a database with a tag named "workout"
-    When I add the tag named "workout" to the task named "do 3 pushups"
-    Then the tag named "workout" has a list == [task named "do 3 pushups"]
+        #A task can have a project
+        And I create a <project> named "looking good" and add it to the session
+        And I add the <task> named "drop off drycleaning" to the <project> named "looking good"
 
+        #A task can have a tag
+        And I create a <tag> named "chores" and add it to the session
+        And I add the <task> named "drop off drycleaning" to the <tag> named "chores"
 
+        And commit the session to the db
 
+    Scenario: verify connections between <task> and above objects
+        Then the <project> named "looking good" has a one-to-many relationship with the <task> named "drop off drycleaning"
+        Then the <task> named "drop off drycleaning" has a many-to-many relationship with the <tag> named "chores"

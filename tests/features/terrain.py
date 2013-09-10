@@ -1,15 +1,13 @@
-# from lettuce import world
 from lettuce import *
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import *
-from init_db import Base, Tags, Tasks, Events
+from init_db import Base, Tags, Tasks, Events, Projects
 from termcolor import cprint
+from collections import namedtuple
 
 @before.all
 def say_hello():
-    print "\n"*10
-    # cprint("LETTUCE WILL START TO RUN TESTS RIGHT NOW...", 'green')
-
+    world.focus = False #global variable that, when True, stops all printing to terminal
 
 @before.each_feature
 def feature_setup(feature):
@@ -21,11 +19,18 @@ def feature_setup(feature):
     Session             = sessionmaker(bind=world.engine)
     world.session       = Session()
     Base.metadata.create_all(world.engine)
-    world.db_classes = {"tag":Tags, "task":Tasks, "event":Events}
+    tbl = namedtuple("tbl", "cl, collection, scalar")
+    world.db_classes = {"tag":     tbl(Tags,   "tags", "tag"),
+                        "task":    tbl(Tasks,  "tasks", "task"),
+                        "event":   tbl(Events, "events", "event"),
+                        "project": tbl(Projects,"projects", "project")}
+                        # "person":  tbl(Persons,"persons"),
+                        # "place":   tbl(Places, "places")}
     world.obj_dict   = {}
-    print ""
-    cprint("====================================================", 'cyan')
-    cprint("FEATURE: "+feature.name, 'cyan', attrs=['underline', 'bold'])
+    if not world.focus:
+        cprint(u'\u250f'+""+u'\u2501'*70, 'cyan')
+        cprint(u'\u2503'+"  ", 'cyan', attrs=['bold'], end="")
+        cprint("FEATURE: "+feature.name, 'cyan', attrs=['underline', 'bold'])
 
 @before.each_scenario
 def scenario_setup(scenario):
@@ -48,18 +53,28 @@ def scenario_rundown(scenario):
     for step in steps:
         if step in world.untried_steps or step in world.failed_steps:
 
+            cprint(u'\u2503'+"  ", 'cyan', attrs=['bold'])
             print ""
-            cprint("-SCENARIO-FAILED: "+str(scenario.name), 'red')
-            for step in steps:
-                if step.failed:
-                    cprint(" "+str(step.described_at.line)+"**"+ str(step.sentence), 'red')
-                elif step.passed:
-                    cprint(" "+str(step.described_at.line)+"  "+str(step.sentence), 'green')
-                else:
-                    cprint(" "+str(step.described_at.line)+"**" + str(step.sentence), 'yellow')
-            print ""
+            cprint(u'\u2503'+"  ", 'cyan', attrs=['bold'], end="")
+            cprint(" -SCENARIO-FAILED: "+str(scenario.name), 'red')
+            step_stepper(steps)
+            # for step in steps:
+            #     if step.failed:
+            #         cprint(" "+str(step.described_at.line)+"**"+ str(step.sentence), 'red')
+            #         world.focus = True
+            #     elif step.passed:
+            #         cprint(" "+str(step.described_at.line)+"  "+str(step.sentence), 'green')
+            #     else:
+            #         cprint(" "+str(step.described_at.line)+"**" + str(step.sentence), 'yellow')
+            #         world.focus = True
+            # print ""
             return
-    cprint("-SCENARIO-PASSED: "+str(scenario.name), 'green')
+        else:
+            # step_stepper(steps)
+            pass
+    if not world.focus:
+        cprint(u'\u2503'+"  ", 'cyan', attrs=['bold'], end="")
+        cprint(" -SCENARIO-PASSED: "+str(scenario.name), 'green')
 
 
 @after.each_feature
@@ -70,11 +85,23 @@ def teardown_feature(feature):
     world.obj_dict      = None
     world.failed_steps  = None
     world.untried_steps = None
-    # cprint("END FEATURE: "+feature.name, 'white', 'on_grey')
+    # if not world.focus:
+        # cprint(u'\u2517'+""+u'\u2501'*70, 'cyan')
 
 @after.all
 def last_thing(total):
-    for item in total.proposed_definitions:
-        print "   "
-        cprint("Needs a definition:", 'magenta')
-        cprint(str(item.sentence), 'yellow')
+    cprint(u'\u2588'*85, 'white')
+
+def step_stepper(steps):
+    for step in steps:
+        if step.failed:
+            cprint(" "+str(step.described_at.line)+"**"+ str(step.sentence), 'red')
+            world.focus = True
+        elif step.passed:
+            cprint(" "+str(step.described_at.line)+"  "+str(step.sentence), 'green')
+        else:
+            cprint(" "+str(step.described_at.line)+"**" + str(step.sentence), 'yellow')
+            world.focus = True
+    print ""
+
+
